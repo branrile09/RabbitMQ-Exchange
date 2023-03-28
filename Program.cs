@@ -107,7 +107,7 @@
             {
                 byte[] body = ea.Body.ToArray();
                 Exchange_Order newOrder = new (body);
-                ExchangeRequest(newOrder);
+                ExchangeRequest(newOrder,channel);
             };
 
             channel.BasicConsume(queue: queueName,
@@ -115,10 +115,19 @@
                                  consumer: consumer);
         }
 
+        static void PublishCompleted(IModel channel, Exchange_Order newOrder)
+        {
+            var encoded_message = newOrder.NewMessage();
+
+            channel.BasicPublish(exchange: "Trades",
+                routingKey: string.Empty,
+                basicProperties: null,
+                body: encoded_message);
 
 
+        }
 
-        static void ExchangeRequest(Exchange_Order newOrder)
+        static void ExchangeRequest(Exchange_Order newOrder, IModel channel)
         {
             Console.WriteLine("new order request");
 
@@ -153,12 +162,19 @@
                         _orders[i].quantity -= newOrder.quantity;
                         Console.WriteLine($"{newOrder.username}: is trading {newOrder.stock} {newOrder.quantity}@ ${_orders[i].price}ea from {_orders[i].username}");
                         _completed.Add(newOrder);
+                        PublishCompleted(channel, newOrder);
                     }
                     else if (newOrder.quantity == _orders[i].quantity)
                     {
                         Console.WriteLine($"{newOrder.username}: is trading {newOrder.stock} {newOrder.quantity}@ ${_orders[i].price}ea from {_orders[i].username}");
+                        
                         _completed.Add(_orders[i]);
                         _completed.Add(newOrder);
+
+                        PublishCompleted(channel, _orders[i]);
+                        PublishCompleted(channel, newOrder);
+
+
                         _orders.RemoveAt(i);                        
                         break;
                     }
@@ -167,6 +183,8 @@
                         newOrder.quantity -= _orders[i].quantity;
                         Console.WriteLine($"{newOrder.username}: is trading  {newOrder.stock} {_orders[i].quantity}@ ${_orders[i].price}ea from {_orders[i].username}");
                         _completed.Add(_orders[i]);
+                        PublishCompleted(channel, _orders[i]);
+
                         _orders.RemoveAt(i);
                         i--; // still making more purchases, list is now smaller, so we need to go back 1 step
                     }
