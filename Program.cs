@@ -165,7 +165,7 @@
                         _orders[i].quantity -= newOrder.quantity;
                         Console.WriteLine($"{newOrder.username}: is trading {newOrder.stock} {newOrder.quantity}@ ${lowestPrice}ea from {_orders[i].username}");
                         _completed.Add(newOrder);
-                        PublishCompleted(channel, newOrder);
+                        //PublishCompleted(channel, newOrder);
                     }
                     else if (newOrder.quantity == _orders[i].quantity)
                     {
@@ -174,8 +174,8 @@
                         _completed.Add(_orders[i]);
                         _completed.Add(newOrder);
                         newOrder.quantity = 0;
-                        PublishCompleted(channel, _orders[i]);
-                        PublishCompleted(channel, newOrder);
+                        //PublishCompleted(channel, _orders[i]);
+                        //PublishCompleted(channel, newOrder);
 
 
                         _orders.RemoveAt(i);                        
@@ -186,7 +186,7 @@
                         newOrder.quantity -= _orders[i].quantity;
                         Console.WriteLine($"{newOrder.username}: is trading  {newOrder.stock} {_orders[i].quantity}@ ${lowestPrice}ea from {_orders[i].username}");
                         _completed.Add(_orders[i]);
-                        PublishCompleted(channel, _orders[i]);
+                        //PublishCompleted(channel, _orders[i]);
 
                         _orders.RemoveAt(i);
                         i--; // still making more purchases, list is now smaller, so we need to go back 1 step
