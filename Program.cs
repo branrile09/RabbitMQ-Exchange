@@ -38,17 +38,17 @@
             {
 
                 input = Console.ReadLine()!;
-                if (input == "EXIT" || input == "exit")
+                if (input.ToLower() == "exit")
                 {
                     Console.Clear();
                     FINISHED = true;
                 }
-                if (input == "cls")
+                if (input.ToLower() == "cls")
                 {
                     Console.Clear();
                     Console.WriteLine("TYPE 'EXIT' to leave, 'cls' to clear screen, 'listcurrent' (current trades), 'listcompleted' (for completed)");
                 }
-                else if (input == "listcurrent")
+                else if (input.ToLower() == "listcurrent")
                 {//lists all current trades
                     foreach (Exchange_Order E in _orders)
                     {
@@ -67,7 +67,7 @@
                     }                
                 
                 }
-                if (input == "listcompleted")
+                if (input.ToLower() == "listcompleted")
                 { //lists all completed trades
                     foreach (Exchange_Order E in _completed)
                     {
