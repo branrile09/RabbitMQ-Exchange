@@ -49,7 +49,7 @@
                     Console.WriteLine("TYPE 'EXIT' to leave, 'cls' to clear screen, 'listcurrent' (current trades), 'listcompleted' (for completed)");
                 }
                 else if (input == "listcurrent")
-                {
+                {//lists all current trades
                     foreach (Exchange_Order E in _orders)
                     {
                         string bs; //bs means buy or sell
@@ -68,7 +68,7 @@
                 
                 }
                 if (input == "listcompleted")
-                {
+                { //lists all completed trades
                     foreach (Exchange_Order E in _completed)
                     {
                         string bs; //bs means buy or sell
@@ -143,7 +143,7 @@
         static void PublishCompleted(Exchange_Order newOrder)
         {
             var encoded_message = newOrder.NewMessage();
-
+            //publishes trade when completed
             newMod.BasicPublish(exchange: "Trades",
                 routingKey: string.Empty,
                 basicProperties: null,
@@ -176,17 +176,20 @@
                 bool buyCondition = newOrder.buyOrSell && (newOrder.price >= _orders[i].price);
                 bool sellCondition = false;
                 if (!buyCondition)
-                {
+                { //we are also checking if in here if the buyer is paying more than seller price
                     sellCondition = !newOrder.buyOrSell && (newOrder.price <= _orders[i].price);
                 }
                 bool tradeCondition = buyCondition || sellCondition;
                 //we need appropriate trade condition to make a trade. 
                 if (tradeCondition)
-                {
+                {//we are trading at the sellers price which we know is less than or equal to buyers price
                     double lowestPrice = Math.Min(newOrder.price, _orders[i].price);
 
+                    //we are buying/selling stock from this person until all possible trades have been made
+                    //first in first out for trade attempts. not most ideal but quickest to code.
+                    //ideally a buyer would buy the cheapest stock first, we would also have other things we could look at
                     if (newOrder.quantity < _orders[i].quantity)
-                    {
+                    { 
                         _orders[i].quantity -= newOrder.quantity;
                         Console.WriteLine($"{newOrder.username}: is trading {newOrder.stock} {newOrder.quantity}@ ${lowestPrice}ea from {_orders[i].username}");
                         _completed.Add(newOrder);
