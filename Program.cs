@@ -27,7 +27,7 @@
             Console.Clear();
 
             //let user know how to leave
-            Console.WriteLine("TYPE 'EXIT' to leave");           
+            Console.WriteLine("TYPE 'EXIT' to leave, 'cls' to clear screen, 'listcurrent' (current trades), 'listcompleted' (for completed)");           
 
             //loop for sending and receiving messages
             while (!FINISHED)
@@ -41,7 +41,8 @@
                 }
                 if (input == "cls")
                 {
-                    Console.Clear();                
+                    Console.Clear();
+                    Console.WriteLine("TYPE 'EXIT' to leave, 'cls' to clear screen, 'listcurrent' (current trades), 'listcompleted' (for completed)");
                 }
                 else if (input == "listcurrent")
                 {
@@ -129,15 +130,15 @@
 
         static void ExchangeRequest(Exchange_Order newOrder, IModel channel)
         {
-            Console.WriteLine("new order request");
+            //Console.WriteLine("new order request");
 
             if (newOrder.buyOrSell)
             {
-                Console.WriteLine($"{newOrder.username}: is buying {newOrder.quantity}@ ${newOrder.price}ea");
+                Console.WriteLine($"{newOrder.username}: is buying {newOrder.quantity}*{newOrder.stock}@ ${newOrder.price}ea");
             }
             else 
             {
-                Console.WriteLine($"{newOrder.username}: is selling {newOrder.quantity}@ ${newOrder.price}ea");
+                Console.WriteLine($"{newOrder.username}: is selling {newOrder.quantity}*{newOrder.stock}@ ${newOrder.price}ea");
             }
             
             for (int i = 0; i < _orders.Count; i++)
@@ -157,20 +158,22 @@
                 //we need appropriate trade condition to make a trade. 
                 if (tradeCondition)
                 {
+                    double lowestPrice = Math.Min(newOrder.price, _orders[i].price);
+
                     if (newOrder.quantity < _orders[i].quantity)
                     {
                         _orders[i].quantity -= newOrder.quantity;
-                        Console.WriteLine($"{newOrder.username}: is trading {newOrder.stock} {newOrder.quantity}@ ${_orders[i].price}ea from {_orders[i].username}");
+                        Console.WriteLine($"{newOrder.username}: is trading {newOrder.stock} {newOrder.quantity}@ ${lowestPrice}ea from {_orders[i].username}");
                         _completed.Add(newOrder);
                         PublishCompleted(channel, newOrder);
                     }
                     else if (newOrder.quantity == _orders[i].quantity)
                     {
-                        Console.WriteLine($"{newOrder.username}: is trading {newOrder.stock} {newOrder.quantity}@ ${_orders[i].price}ea from {_orders[i].username}");
+                        Console.WriteLine($"{newOrder.username}: is trading {newOrder.stock} {newOrder.quantity}@ ${lowestPrice}ea from {_orders[i].username}");
                         
                         _completed.Add(_orders[i]);
                         _completed.Add(newOrder);
-
+                        newOrder.quantity = 0;
                         PublishCompleted(channel, _orders[i]);
                         PublishCompleted(channel, newOrder);
 
@@ -181,7 +184,7 @@
                     else if (newOrder.quantity > _orders[i].quantity)
                     {
                         newOrder.quantity -= _orders[i].quantity;
-                        Console.WriteLine($"{newOrder.username}: is trading  {newOrder.stock} {_orders[i].quantity}@ ${_orders[i].price}ea from {_orders[i].username}");
+                        Console.WriteLine($"{newOrder.username}: is trading  {newOrder.stock} {_orders[i].quantity}@ ${lowestPrice}ea from {_orders[i].username}");
                         _completed.Add(_orders[i]);
                         PublishCompleted(channel, _orders[i]);
 
@@ -194,10 +197,9 @@
             if (newOrder.quantity > 0)
             {
                 _orders.Add(newOrder);
-                Console.WriteLine("order added to que");
-                Console.WriteLine($"{newOrder.username}: is trading {newOrder.quantity} @ {newOrder.price}ea");
+                Console.WriteLine("remaining order added to que");
             }
-            Console.WriteLine("Order Processed");
+            //Console.WriteLine("Order Processed");
 
         }
 
