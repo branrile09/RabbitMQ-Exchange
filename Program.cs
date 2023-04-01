@@ -21,6 +21,8 @@
             bool FINISHED = false;
             string input = " ";
 
+
+
          
             //connect and join
             ConnectionSetup(exchangeCode, channel);            
@@ -116,6 +118,8 @@
                                  consumer: consumer);
         }
 
+
+
         static void PublishCompleted(IModel channel, Exchange_Order newOrder)
         {
             var encoded_message = newOrder.NewMessage();
@@ -142,7 +146,8 @@
             }
             
             for (int i = 0; i < _orders.Count; i++)
-            {
+            {               
+
                 if (newOrder.buyOrSell == _orders[i].buyOrSell || newOrder.stock != _orders[i].stock)
                 {
                     continue;                
@@ -165,6 +170,7 @@
                         _orders[i].quantity -= newOrder.quantity;
                         Console.WriteLine($"{newOrder.username}: is trading {newOrder.stock} {newOrder.quantity}@ ${lowestPrice}ea from {_orders[i].username}");
                         _completed.Add(newOrder);
+                        break;
                         //PublishCompleted(channel, newOrder);
                     }
                     else if (newOrder.quantity == _orders[i].quantity)
@@ -176,8 +182,6 @@
                         newOrder.quantity = 0;
                         //PublishCompleted(channel, _orders[i]);
                         //PublishCompleted(channel, newOrder);
-
-
                         _orders.RemoveAt(i);                        
                         break;
                     }
