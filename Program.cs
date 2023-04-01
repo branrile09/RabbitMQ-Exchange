@@ -10,13 +10,14 @@
         //this should be in a database, however this is rapid prototyping       
         static List<Exchange_Order> _orders = new ();
         static List<Exchange_Order> _completed = new ();
+        static IModel newMod = new ConnectionFactory { HostName = "localhost" }.CreateConnection().CreateModel();
 
         static void Main()
         {
             //initialize variables
             var factory = new ConnectionFactory { HostName = "localhost" };
             using var connection = factory.CreateConnection();
-            using var channel = connection.CreateModel();
+            using var channel = connection.CreateModel();      
             string exchangeCode = "Orders"; 
             bool FINISHED = false;
             string input = " ";
@@ -25,7 +26,8 @@
 
          
             //connect and join
-            ConnectionSetup(exchangeCode, channel);            
+            ConnectionSetup(exchangeCode, channel);
+            PubConnectionSetup();
             Console.Clear();
 
             //let user know how to leave
@@ -86,8 +88,6 @@
                 }
 
 
-
-
             }
 
         }
@@ -119,12 +119,32 @@
         }
 
 
+        static void PubConnectionSetup()
+        {
 
-        static void PublishCompleted(IModel channel, Exchange_Order newOrder)
+            newMod.ExchangeDeclare(exchange: "", type: ExchangeType.Fanout);
+
+            // declare a server-named queue
+            var queueName = newMod.QueueDeclare().QueueName;
+
+            newMod.QueueBind(queue: queueName,
+                exchange: "",
+                routingKey: string.Empty);
+
+            //consuumer listener
+            EventingBasicConsumer consumer = new(newMod);
+
+            newMod.BasicConsume(queue: queueName,
+                                 autoAck: true,
+                                 consumer: consumer);
+        }
+
+
+        static void PublishCompleted(Exchange_Order newOrder)
         {
             var encoded_message = newOrder.NewMessage();
 
-            channel.BasicPublish(exchange: "Trades",
+            newMod.BasicPublish(exchange: "Trades",
                 routingKey: string.Empty,
                 basicProperties: null,
                 body: encoded_message);
@@ -170,8 +190,8 @@
                         _orders[i].quantity -= newOrder.quantity;
                         Console.WriteLine($"{newOrder.username}: is trading {newOrder.stock} {newOrder.quantity}@ ${lowestPrice}ea from {_orders[i].username}");
                         _completed.Add(newOrder);
+                        PublishCompleted(newOrder);
                         break;
-                        //PublishCompleted(channel, newOrder);
                     }
                     else if (newOrder.quantity == _orders[i].quantity)
                     {
@@ -180,8 +200,8 @@
                         _completed.Add(_orders[i]);
                         _completed.Add(newOrder);
                         newOrder.quantity = 0;
-                        //PublishCompleted(channel, _orders[i]);
-                        //PublishCompleted(channel, newOrder);
+                        PublishCompleted(_orders[i]);
+                        PublishCompleted(newOrder);
                         _orders.RemoveAt(i);                        
                         break;
                     }
@@ -190,8 +210,7 @@
                         newOrder.quantity -= _orders[i].quantity;
                         Console.WriteLine($"{newOrder.username}: is trading  {newOrder.stock} {_orders[i].quantity}@ ${lowestPrice}ea from {_orders[i].username}");
                         _completed.Add(_orders[i]);
-                        //PublishCompleted(channel, _orders[i]);
-
+                        PublishCompleted(_orders[i]);
                         _orders.RemoveAt(i);
                         i--; // still making more purchases, list is now smaller, so we need to go back 1 step
                     }
