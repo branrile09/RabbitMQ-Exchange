@@ -122,13 +122,13 @@
         static void PubConnectionSetup()
         {
 
-            newMod.ExchangeDeclare(exchange: "", type: ExchangeType.Fanout);
+            newMod.ExchangeDeclare(exchange: "Trades", type: ExchangeType.Fanout);
 
             // declare a server-named queue
             var queueName = newMod.QueueDeclare().QueueName;
 
             newMod.QueueBind(queue: queueName,
-                exchange: "",
+                exchange: "Trades",
                 routingKey: string.Empty);
 
             //consuumer listener
